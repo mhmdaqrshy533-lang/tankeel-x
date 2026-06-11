@@ -5,7 +5,7 @@ class LaserProjectile {
     var x = 0f
     var y = 0f
     var z = 0f
-    var velocityZ = -90f // Travels fast into the background
+    var velocityZ = -250f // Travels fast into the background
     var lifetime = 0f
     val maxLifetime = 1.2f
 

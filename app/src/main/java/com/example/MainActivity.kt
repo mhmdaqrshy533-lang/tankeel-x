@@ -19,6 +19,17 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.changedToDown
 
+import androidx.compose.foundation.layout.*
+import androidx.compose.material3.Text
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import kotlinx.coroutines.delay
+import com.example.engine.utils.SaveSystem
+
 class MainActivity : ComponentActivity() {
     private var glSurfaceView: GLSurfaceView? = null
 
@@ -34,11 +45,35 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
 
         setContent {
+            val context = applicationContext
+            val saveSystem = remember { SaveSystem(context) }
             val renderer = remember { EngineRenderer() }
+            
+            var activeProjectiles by remember { mutableIntStateOf(0) }
+            var warpVelocity by remember { mutableFloatStateOf(0f) }
+            var currentScore by remember { mutableIntStateOf(0) }
+            var highScore by remember { mutableIntStateOf(saveSystem.highScore) }
+            
+            val neonCyan = Color(0xFF00F3FF)
+            
+            LaunchedEffect(Unit) {
+                while (true) {
+                    activeProjectiles = renderer.activeProjectilesCount
+                    warpVelocity = 250f + (renderer.totalElapsedRuntime * 5f) % 100f
+                    val s = renderer.totalFiringCount * 50
+                    currentScore = s
+                    if (s > highScore) {
+                        highScore = s
+                    }
+                    saveSystem.updateMetrics(renderer.totalFiringCount, s, renderer.totalElapsedRuntime)
+                    delay(32) // approx 30fps refresh for UI
+                }
+            }
+
             Box(modifier = Modifier.fillMaxSize().background(Color.Black)) {
                 AndroidView(
-                    factory = { context ->
-                        GLSurfaceView(context).apply {
+                    factory = { ctx ->
+                        GLSurfaceView(ctx).apply {
                             setEGLContextClientVersion(3)
                             setRenderer(renderer)
                             renderMode = GLSurfaceView.RENDERMODE_CONTINUOUSLY
@@ -64,6 +99,51 @@ class MainActivity : ComponentActivity() {
                         }
                     }
                 )
+                
+                // HUD Overlay
+                Row(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = 24.dp, vertical = 24.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.Top
+                ) {
+                    // Left Anchor: Telemetry
+                    Column {
+                        Text(
+                            text = "SYS: ONLINE\nWARP: ${"%.1f".format(warpVelocity)} LY/s",
+                            color = neonCyan,
+                            fontFamily = FontFamily.Monospace,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 14.sp
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = "PROJECTILES: $activeProjectiles",
+                            color = neonCyan.copy(alpha = 0.8f),
+                            fontFamily = FontFamily.Monospace,
+                            fontSize = 12.sp
+                        )
+                    }
+                    
+                    // Right Anchor: Scoreboard
+                    Column(horizontalAlignment = Alignment.End) {
+                        Text(
+                            text = "SCORE: $currentScore",
+                            color = neonCyan,
+                            fontFamily = FontFamily.Monospace,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 16.sp
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = "HIGH: $highScore",
+                            color = neonCyan.copy(alpha = 0.8f),
+                            fontFamily = FontFamily.Monospace,
+                            fontSize = 12.sp
+                        )
+                    }
+                }
             }
         }
     }

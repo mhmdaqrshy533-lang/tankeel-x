@@ -20,6 +20,22 @@ class EngineRenderer : GLSurfaceView.Renderer {
     private lateinit var fighterController: FighterController
     private lateinit var weaponSystem: WeaponSystem
     
+    private val lightDir = floatArrayOf(-1f, -0.2f, -0.8f)
+    private val nebulaColorInfluence = FloatArray(3)
+    private val ambientLight = FloatArray(3)
+    private val overlayCamera = Camera(fov = 40f).apply {
+        position = floatArrayOf(0f, 0f, 6.5f)
+        target = floatArrayOf(0f, 0f, 0f)
+    }
+
+    // Engine stats for MainActivity
+    var totalElapsedRuntime = 0f
+        private set
+    val activeProjectilesCount: Int
+        get() = if (this::weaponSystem.isInitialized) weaponSystem.activeProjectilesCount else 0
+    val totalFiringCount: Int
+        get() = if (this::weaponSystem.isInitialized) weaponSystem.totalFiringCount else 0
+        
     private var lastTime: Long = 0
     private var startTime: Long = 0
 
@@ -192,6 +208,8 @@ class EngineRenderer : GLSurfaceView.Renderer {
         if (width == 0 || height == 0) return
         GLES30.glViewport(0, 0, width, height)
         camera.updateAspect(width.toFloat() / height.toFloat())
+        overlayCamera.updateAspect(width.toFloat() / height.toFloat())
+        overlayCamera.updateProjection()
     }
 
     override fun onDrawFrame(gl: GL10?) {
@@ -202,6 +220,7 @@ class EngineRenderer : GLSurfaceView.Renderer {
         val deltaTime = (time - lastTime) / 1000f
         val elapsedTime = (time - startTime) / 1000f
         lastTime = time
+        totalElapsedRuntime = elapsedTime
 
         // Engine Logic - Update Loop (Time.deltaTime architecture)
         // Continuously rotate locally on the Y-Axis
@@ -214,16 +233,14 @@ class EngineRenderer : GLSurfaceView.Renderer {
         camera.cinematicUpdate(elapsedTime, 0f) // Keep fixed or neutral camera tracking
         camera.updateView()
 
-        // Directional Light from cosmic sun at a sharp angle
-        val lightDir = floatArrayOf(-1f, -0.2f, -0.8f)
-        
         // Dynamic Ambient Light interpolating Nebula colors
-        val nebulaColorInfluence = floatArrayOf(
-            0.5f + kotlin.math.sin(elapsedTime * 0.5f) * 0.3f, // R (Magenta/Purple mix)
-            0.2f + kotlin.math.sin(elapsedTime * 0.3f) * 0.2f, // G (Turquoise shift)
-            0.8f + kotlin.math.sin(elapsedTime * 0.4f) * 0.2f  // B (Deep space)
-        )
-        val ambientLight = floatArrayOf(nebulaColorInfluence[0] * 0.3f, nebulaColorInfluence[1] * 0.3f, nebulaColorInfluence[2] * 0.3f)
+        nebulaColorInfluence[0] = 0.5f + kotlin.math.sin(elapsedTime * 0.5f) * 0.3f
+        nebulaColorInfluence[1] = 0.2f + kotlin.math.sin(elapsedTime * 0.3f) * 0.2f
+        nebulaColorInfluence[2] = 0.8f + kotlin.math.sin(elapsedTime * 0.4f) * 0.2f
+        
+        ambientLight[0] = nebulaColorInfluence[0] * 0.3f
+        ambientLight[1] = nebulaColorInfluence[1] * 0.3f
+        ambientLight[2] = nebulaColorInfluence[2] * 0.3f
 
         // Render Scene Objects
         tankeelObj.draw(camera, lightDir, ambientLight)
@@ -235,12 +252,6 @@ class EngineRenderer : GLSurfaceView.Renderer {
         fighterController.update(deltaTime)
         weaponSystem.update(deltaTime)
         
-        // Cinematic overlay camera for Fighter, tracking always in front, closer and larger scale
-        val overlayCamera = Camera(fov = 40f)
-        overlayCamera.aspect = camera.aspect
-        overlayCamera.position = floatArrayOf(0f, 0f, 6.5f)
-        overlayCamera.target = floatArrayOf(0f, 0f, 0f)
-        overlayCamera.updateProjection()
         overlayCamera.updateView()
         
         // Clear Depth Buffer: render Fighter definitively in foreground. Map without Culling for flat B-2 edges.

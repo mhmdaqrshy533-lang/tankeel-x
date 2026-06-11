@@ -36,6 +36,16 @@ class WeaponSystem {
         }
     """
 
+    var totalFiringCount = 0
+        private set
+
+    val activeProjectilesCount: Int
+        get() = projectiles.count { it.active }
+
+    private val modelMatrix = FloatArray(16)
+    private val mvpMatrix = FloatArray(16)
+    private val vpMatrix = FloatArray(16)
+
     init {
         // Create thin box for laser mesh
         val w = 0.04f
@@ -75,6 +85,7 @@ class WeaponSystem {
     }
 
     fun fire(fighterX: Float, fighterY: Float, fighterZ: Float, rollDegree: Float) {
+        totalFiringCount += 2
         // Spawns twin lasers from the wingtips
         val rollRad = (rollDegree * Math.PI / 180.0).toFloat()
         
@@ -111,14 +122,11 @@ class WeaponSystem {
         
         shader.use()
         
-        // High-intensity Neon-Red (#FF0033)
-        shader.setUniform4f("u_Color", 1.0f, 0.0f, 0.2f, 0.9f)
+        // High-intensity Cosmic Cyan (#00F3FF)
+        shader.setUniform4f("u_Color", 0.0f, 0.95f, 1.0f, 0.9f)
 
         GLES30.glBindVertexArray(vao[0])
 
-        val modelMatrix = FloatArray(16)
-        val mvpMatrix = FloatArray(16)
-        val vpMatrix = FloatArray(16)
         Matrix.multiplyMM(vpMatrix, 0, camera.projectionMatrix, 0, camera.viewMatrix, 0)
 
         for (p in projectiles) {
