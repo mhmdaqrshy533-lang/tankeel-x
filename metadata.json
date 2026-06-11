@@ -1,0 +1,6 @@
+{
+  "name": "TANKEEL-X",
+  "description": "A cinematic 3D space scene featuring the fictional planet TANKEEL-X.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
