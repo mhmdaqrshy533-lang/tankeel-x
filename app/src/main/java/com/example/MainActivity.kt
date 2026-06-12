@@ -19,6 +19,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.changedToDown
 
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.rotate
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
@@ -29,6 +33,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
 import com.example.engine.utils.SaveSystem
+import androidx.compose.foundation.clickable
 
 class MainActivity : ComponentActivity() {
     private var glSurfaceView: GLSurfaceView? = null
@@ -53,13 +58,18 @@ class MainActivity : ComponentActivity() {
             var warpVelocity by remember { mutableFloatStateOf(0f) }
             var currentScore by remember { mutableIntStateOf(0) }
             var highScore by remember { mutableIntStateOf(saveSystem.highScore) }
+            var heading by remember { mutableFloatStateOf(0f) }
+            var pilotInAircraft by remember { mutableStateOf(true) }
             
             val neonCyan = Color(0xFF00F3FF)
+            val neonEmerald = Color(0xFF00FF66)
+            val obsidianBlack = Color(0xB3000000) // 70% opacity black
             
             LaunchedEffect(Unit) {
                 while (true) {
                     activeProjectiles = renderer.activeProjectilesCount
                     warpVelocity = 250f + (renderer.totalElapsedRuntime * 5f) % 100f
+                    heading = renderer.fighterYaw
                     val s = renderer.totalFiringCount * 50
                     currentScore = s
                     if (s > highScore) {
@@ -96,18 +106,19 @@ class MainActivity : ComponentActivity() {
                     }
                 )
                 
-                // HUD Overlay
-                Row(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(horizontal = 24.dp, vertical = 24.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.Top
-                ) {
-                    // Left Anchor: Telemetry
-                    Column {
+                // HUD Layer (Unified Grid Layout)
+                Box(modifier = Modifier.fillMaxSize().padding(20.dp)) {
+                    
+                    // Top Left: Telemetry & Integrity
+                    Column(
+                        modifier = Modifier
+                            .align(Alignment.TopStart)
+                            .background(obsidianBlack, RoundedCornerShape(0.dp)) // Sharp edges
+                            .border(1.dp, neonCyan.copy(alpha = 0.5f), RoundedCornerShape(0.dp))
+                            .padding(12.dp)
+                    ) {
                         Text(
-                            text = "SGRD: OFFLINE\nGALAXY: ANDROMEDA",
+                            text = "SGRD: OFFLINE",
                             color = neonCyan,
                             fontFamily = FontFamily.Monospace,
                             fontWeight = FontWeight.Bold,
@@ -115,15 +126,22 @@ class MainActivity : ComponentActivity() {
                         )
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
-                            text = "THRUST: ${"%.1f".format(warpVelocity * 10f)} km/s\nPROJECTILES: $activeProjectiles",
-                            color = neonCyan.copy(alpha = 0.8f),
+                            text = "HULL INTEGRITY: 100%\nWARP STABILITY: NOMINAL",
+                            color = neonEmerald,
                             fontFamily = FontFamily.Monospace,
                             fontSize = 12.sp
                         )
                     }
-                    
-                    // Right Anchor: Scoreboard
-                    Column(horizontalAlignment = Alignment.End) {
+
+                    // Top Right: Economy & Tactical
+                    Column(
+                        modifier = Modifier
+                            .align(Alignment.TopEnd)
+                            .background(obsidianBlack, RoundedCornerShape(0.dp))
+                            .border(1.dp, neonCyan.copy(alpha = 0.5f), RoundedCornerShape(0.dp))
+                            .padding(12.dp),
+                        horizontalAlignment = Alignment.End
+                    ) {
                         Text(
                             text = "CREDITS: $currentScore",
                             color = neonCyan,
@@ -133,10 +151,80 @@ class MainActivity : ComponentActivity() {
                         )
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
-                            text = "RESOURCES: $highScore",
+                            text = "RESOURCES: $highScore\nCARGO: SECURE",
+                            color = neonEmerald,
+                            fontFamily = FontFamily.Monospace,
+                            fontSize = 12.sp,
+                            textAlign = androidx.compose.ui.text.style.TextAlign.End
+                        )
+                    }
+
+                    // Center: Circular Compass (Rendered around the focal point)
+                    Box(modifier = Modifier.align(Alignment.Center).size(300.dp)) {
+                        // The compass ring
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .border(2.dp, neonCyan.copy(alpha = 0.3f), RoundedCornerShape(150.dp))
+                        )
+                        // The compass marker rotating based on heading
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .rotate(-heading)
+                        ) {
+                            Text(
+                                text = "N",
+                                color = neonCyan,
+                                fontFamily = FontFamily.Monospace,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 16.sp,
+                                modifier = Modifier.align(Alignment.TopCenter).padding(8.dp)
+                            )
+                        }
+                    }
+
+                    // Bottom Right: Engine Metrics
+                    Column(
+                        modifier = Modifier
+                            .align(Alignment.BottomEnd)
+                            .background(obsidianBlack, RoundedCornerShape(0.dp))
+                            .border(1.dp, neonCyan.copy(alpha = 0.5f), RoundedCornerShape(0.dp))
+                            .padding(12.dp),
+                        horizontalAlignment = Alignment.End
+                    ) {
+                        Text(
+                            text = "THRUST: ${"%.1f".format(warpVelocity * 10f)} km/s",
+                            color = neonCyan,
+                            fontFamily = FontFamily.Monospace,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 14.sp
+                        )
+                        Text(
+                            text = "PROJECTILES: $activeProjectiles",
                             color = neonCyan.copy(alpha = 0.8f),
                             fontFamily = FontFamily.Monospace,
                             fontSize = 12.sp
+                        )
+                    }
+
+                    // Bottom Left: ENTER AIRCRAFT Toggle
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.BottomStart)
+                            .background(obsidianBlack, RoundedCornerShape(0.dp))
+                            .border(2.dp, neonEmerald, RoundedCornerShape(0.dp))
+                            .clickable {
+                                pilotInAircraft = !pilotInAircraft
+                            }
+                            .padding(horizontal = 24.dp, vertical = 12.dp)
+                    ) {
+                        Text(
+                            text = if (pilotInAircraft) "EXIT AIRCRAFT" else "ENTER AIRCRAFT",
+                            color = neonEmerald,
+                            fontFamily = FontFamily.Monospace,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 16.sp
                         )
                     }
                 }

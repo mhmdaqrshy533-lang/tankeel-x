@@ -35,6 +35,8 @@ class EngineRenderer : GLSurfaceView.Renderer {
         get() = if (this::weaponSystem.isInitialized) weaponSystem.activeProjectilesCount else 0
     val totalFiringCount: Int
         get() = if (this::weaponSystem.isInitialized) weaponSystem.totalFiringCount else 0
+    val fighterYaw: Float
+        get() = if (this::fighterObj.isInitialized) fighterObj.transform.rotation[1] else 0f
         
     private var lastTime: Long = 0
     private var startTime: Long = 0
