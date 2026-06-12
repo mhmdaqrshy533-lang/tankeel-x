@@ -107,7 +107,7 @@ class MainActivity : ComponentActivity() {
                     // Left Anchor: Telemetry
                     Column {
                         Text(
-                            text = "SYS: ONLINE\nWARP: ${"%.1f".format(warpVelocity)} LY/s",
+                            text = "SGRD: OFFLINE\nGALAXY: ANDROMEDA",
                             color = neonCyan,
                             fontFamily = FontFamily.Monospace,
                             fontWeight = FontWeight.Bold,
@@ -115,7 +115,7 @@ class MainActivity : ComponentActivity() {
                         )
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
-                            text = "PROJECTILES: $activeProjectiles",
+                            text = "THRUST: ${"%.1f".format(warpVelocity * 10f)} km/s\nPROJECTILES: $activeProjectiles",
                             color = neonCyan.copy(alpha = 0.8f),
                             fontFamily = FontFamily.Monospace,
                             fontSize = 12.sp
@@ -125,7 +125,7 @@ class MainActivity : ComponentActivity() {
                     // Right Anchor: Scoreboard
                     Column(horizontalAlignment = Alignment.End) {
                         Text(
-                            text = "SCORE: $currentScore",
+                            text = "CREDITS: $currentScore",
                             color = neonCyan,
                             fontFamily = FontFamily.Monospace,
                             fontWeight = FontWeight.Bold,
@@ -133,7 +133,7 @@ class MainActivity : ComponentActivity() {
                         )
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
-                            text = "HIGH: $highScore",
+                            text = "RESOURCES: $highScore",
                             color = neonCyan.copy(alpha = 0.8f),
                             fontFamily = FontFamily.Monospace,
                             fontSize = 12.sp
