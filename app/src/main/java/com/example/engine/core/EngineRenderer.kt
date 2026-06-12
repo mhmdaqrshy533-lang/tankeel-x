@@ -173,8 +173,8 @@ class EngineRenderer : GLSurfaceView.Renderer {
             isPlanet = 1
         }
 
-        // Extremely high vertex density for smooth sphere
-        val mesh = SphereMesh.create(radius = 2.5f, rings = 120, sectors = 120)
+        // Reduced vertex density to prevent slow startup blocking GL thread
+        val mesh = SphereMesh.create(radius = 2.5f, rings = 60, sectors = 60)
 
         tankeelObj = GameObject("TANKEEL-X").apply {
             this.mesh = mesh

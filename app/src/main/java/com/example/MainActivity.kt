@@ -78,10 +78,6 @@ class MainActivity : ComponentActivity() {
                             setRenderer(renderer)
                             renderMode = GLSurfaceView.RENDERMODE_CONTINUOUSLY
                             glSurfaceView = this
-                            post {
-                                requestLayout()
-                                invalidate()
-                            }
                         }
                     },
                     modifier = Modifier.fillMaxSize().pointerInput(Unit) {
